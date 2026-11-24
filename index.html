@@ -602,6 +602,7 @@ body.popup-on{padding-bottom:88px}
 <label>Your name<input autocomplete="name" id="q_name" maxlength="60" placeholder="Full name" type="text"/></label>
 <label>Salon name<input autocomplete="organization" id="q_salon" maxlength="80" placeholder="Your salon's name" type="text"/></label>
 <label>WhatsApp number<input autocomplete="tel" id="q_phone" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile number" type="tel"/></label>
+<label>Email address<input autocomplete="email" id="q_email" inputmode="email" maxlength="120" placeholder="you@example.com" type="email"/></label>
 <label>Which part of Hyderabad?<input id="q_area" maxlength="60" placeholder="e.g. Kondapur, Madhapur, Jubilee Hills" type="text"/></label>
 <input aria-hidden="true" autocomplete="off" class="q-hp" id="q_hp" tabindex="-1" type="text"/>
 <div aria-live="polite" class="qerr" id="q_err1"></div>
@@ -676,7 +677,7 @@ var lead = {};
 var leadSubmitting = false;
 function qOpen(el){
   lead = { salon_type:(el&&el.getAttribute)?(el.getAttribute('data-seg')||''):'', ac:'', chairs:'', lounge:'' };
-  ['q_name','q_salon','q_phone','q_area','q_hp'].forEach(function(id){var e=document.getElementById(id); if(e){ e.value=''; e.classList.remove('q-bad'); }});
+  ['q_name','q_salon','q_phone','q_email','q_area','q_hp'].forEach(function(id){var e=document.getElementById(id); if(e){ e.value=''; e.classList.remove('q-bad'); }});
   document.querySelectorAll('[data-qsend]').forEach(function(s){ s.textContent=''; s.classList.remove('err'); });
   resetAnswers(); showPanel('1');
   var m=document.getElementById('qmodal'); m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
@@ -705,6 +706,7 @@ var Q_RULES = [
   { id:'q_name',  msg:'Please enter your full name (letters only, at least 2).', ok:function(v){ return /^[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ .'-]{1,59}$/.test(v); } },
   { id:'q_salon', msg:'Please enter your salon name (at least 2 characters).', ok:function(v){ return v.length>=2&&/[A-Za-z0-9]/.test(v); } },
   { id:'q_phone', msg:'Please enter a valid 10-digit Indian WhatsApp number.', ok:function(v){ return !!normPhone(v); } },
+  { id:'q_email', msg:'Please enter a valid email address.', ok:function(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); } },
   { id:'q_area',  msg:'Please tell us which part of Hyderabad your salon is in.', ok:function(v){ return v.length>=2&&/[A-Za-z]/.test(v); } }
 ];
 function qStep1(){
@@ -718,7 +720,7 @@ function qStep1(){
   if(first){ err.textContent=first.msg; document.getElementById(first.id).focus(); return; }
   err.textContent='';
   lead.name=qval('q_name').replace(/\s+/g,' '); lead.salon=qval('q_salon').replace(/\s+/g,' ');
-  lead.phone=normPhone(qval('q_phone')); lead.area=qval('q_area').replace(/\s+/g,' ');
+  lead.phone=normPhone(qval('q_phone')); lead.email=qval('q_email'); lead.area=qval('q_area').replace(/\s+/g,' ');
   showPanel('2');
 }
 document.addEventListener('input',function(e){
@@ -750,6 +752,7 @@ function qProceed(){
   var u=new URL(BOOKING_URL);
   u.searchParams.set('embed','1');
   if(lead.name) u.searchParams.set('name',lead.name);
+  if(lead.email) u.searchParams.set('email',lead.email);
   if(!box.querySelector('iframe')||box.getAttribute('data-for')!==u.toString()){
     box.innerHTML='<div class="qbook-load">Loading available slots…</div>';
     var f=document.createElement('iframe');
@@ -765,7 +768,7 @@ function leadFields(){
   return {
     form:'contact',
     honeypot:qval('q_hp'),
-    name:lead.name, phone:lead.phone, salon_name:lead.salon, area:lead.area, city:'Hyderabad',
+    name:lead.name, phone:lead.phone, email:lead.email, salon_name:lead.salon, area:lead.area, city:'Hyderabad',
     salon_type:lead.salon_type,
     ac_units:lead.ac_answer, service_chairs:lead.chairs_answer, waiting_lounge:lead.lounge_answer,
     qualification:lead.status,
